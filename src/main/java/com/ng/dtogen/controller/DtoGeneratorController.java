@@ -18,18 +18,18 @@ public class DtoGeneratorController {
         this.dtoGeneratorService = dtoGeneratorService;
     }
 
-    // @PostMapping("/xml/generate")
-    // public String generateXmlDto(
-    //         @RequestBody String xml,
-    //         @RequestParam String rootClassName,
-    //         @RequestParam String prefix,
-    //         @RequestParam(defaultValue = "false") boolean includeAnnotations
-    // ) throws Exception {
+    @PostMapping("/xml/generate")
+    public String generateXmlDto(
+            @RequestBody String xml,
+            @RequestParam String rootClassName,
+            @RequestParam String prefix,
+            @RequestParam(defaultValue = "false") boolean includeAnnotations
+    ) throws Exception {
 
-    //     log.info("XML DTO request received");
-    //     return dtoGeneratorService.generateXmlDto(
-    //             xml, rootClassName, prefix, includeAnnotations);
-    // }
+        log.info("XML DTO request received");
+        return dtoGeneratorService.generateXmlDto(
+                xml, rootClassName, prefix, includeAnnotations);
+    }
 
     @PostMapping("/json/generate")
     public String generateJsonDto(
