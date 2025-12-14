@@ -10,17 +10,6 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/dto")
-@CrossOrigin(
-    originPatterns = "*",
-    allowedHeaders = "*",
-    methods = {
-        RequestMethod.GET,
-        RequestMethod.POST,
-        RequestMethod.PUT,
-        RequestMethod.DELETE,
-        RequestMethod.OPTIONS
-    }
-)
 public class DtoGeneratorController {
 
     private final DtoGeneratorServiceImpl dtoGeneratorService;
