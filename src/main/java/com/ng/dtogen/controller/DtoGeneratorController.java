@@ -11,11 +11,12 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/dto")
 @CrossOrigin(
-    origins = {
-        "http://localhost:3000",
-        "https://dtodeployment.onrender.com"
-    }
-)
+	    origins = {
+	        "http://localhost:3000",
+	        "https://dtodeployment.onrender.com",
+	        "https://dto-bifkn8qe7-dhruv-pals-projects-e2909998.vercel.app"
+	    }
+	)
 public class DtoGeneratorController {
 
     private final DtoGeneratorServiceImpl dtoGeneratorService;
