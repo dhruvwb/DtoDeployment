@@ -43,13 +43,13 @@ public class DtoGeneratorServiceImpl implements DtoGeneratorService {
             boolean includeAnnotations
     ) throws Exception {
 
-        log.info("Generating XML DTO | rootClassName={}, prefix={}, includeAnnotations={}",
-                rootClassName, prefix, includeAnnotations);
+//        log.info("Generating XML DTO | rootClassName={}, prefix={}, includeAnnotations={}",
+//                rootClassName, prefix, includeAnnotations);
 
         String dto = xmlDtoGenerator.generateDtoFromXml(
                 xml, rootClassName, prefix, includeAnnotations);
 
-        log.info("XML DTO generation completed");
+//        log.info("XML DTO generation completed");
         return dto;
     }
 
@@ -61,15 +61,15 @@ public class DtoGeneratorServiceImpl implements DtoGeneratorService {
             boolean includeAnnotations
     ) throws Exception {
 
-        log.info("Generating JSON DTO | rootClassName={}, prefix={}, includeAnnotations={}",
-                rootClassName, prefix, includeAnnotations);
+//        log.info("Generating JSON DTO | rootClassName={}, prefix={}, includeAnnotations={}",
+//                rootClassName, prefix, includeAnnotations);
 
         String jsonString = objectMapper.writeValueAsString(json);
 
         String dto = jsonDtoGenerator.generateDtoFromJson(
                 jsonString, rootClassName, prefix, includeAnnotations);
 
-        log.info("JSON DTO generation completed");
+//        log.info("JSON DTO generation completed");
         return dto;
     }
 
@@ -81,30 +81,30 @@ public class DtoGeneratorServiceImpl implements DtoGeneratorService {
             boolean includeAnnotations
     ) throws Exception {
 
-        log.info("Generating SOAP DTO | rootClassName={}, prefix={}, includeAnnotations={}",
-                rootClassName, prefix, includeAnnotations);
+//        log.info("Generating SOAP DTO | rootClassName={}, prefix={}, includeAnnotations={}",
+//                rootClassName, prefix, includeAnnotations);
 
         String dto = soapDtoGenerator.generateDtoFromSoap(
                 xml, rootClassName, prefix, includeAnnotations);
 
-        log.info("SOAP DTO generation completed");
+//        log.info("SOAP DTO generation completed");
         return dto;
     }
 
     @Override
     public String compareJson(CompareRequest request) throws Exception {
 
-        log.info("Comparing JSON payloads");
+//        log.info("Comparing JSON payloads");
 
         JsonNode currentJson = objectMapper.readTree(
-                objectMapper.writeValueAsString(request.getCurrentJson()));
+                objectMapper.writeValueAsString(request));
 
         JsonNode expectedJson = objectMapper.readTree(
                 objectMapper.writeValueAsString(request.getExpectedJson()));
 
         String result = jsonComparator.compareJson(currentJson, expectedJson);
 
-        log.info("JSON comparison completed");
+//        log.info("JSON comparison completed");
         return result;
     }
 }

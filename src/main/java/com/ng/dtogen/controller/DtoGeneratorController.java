@@ -2,6 +2,7 @@ package com.ng.dtogen.controller;
 
 import com.ng.dtogen.model.CompareRequest;
 import com.ng.dtogen.service.DtoGeneratorService;
+import com.ng.dtogen.service.DtoGeneratorServiceImpl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -11,24 +12,24 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/dto")
 public class DtoGeneratorController {
 
-    private final DtoGeneratorService dtoGeneratorService;
+    private final DtoGeneratorServiceImpl dtoGeneratorService;
 
-    public DtoGeneratorController(DtoGeneratorService dtoGeneratorService) {
+    public DtoGeneratorController(DtoGeneratorServiceImpl dtoGeneratorService) {
         this.dtoGeneratorService = dtoGeneratorService;
     }
 
-    @PostMapping("/xml/generate")
-    public String generateXmlDto(
-            @RequestBody String xml,
-            @RequestParam String rootClassName,
-            @RequestParam String prefix,
-            @RequestParam(defaultValue = "false") boolean includeAnnotations
-    ) throws Exception {
+    // @PostMapping("/xml/generate")
+    // public String generateXmlDto(
+    //         @RequestBody String xml,
+    //         @RequestParam String rootClassName,
+    //         @RequestParam String prefix,
+    //         @RequestParam(defaultValue = "false") boolean includeAnnotations
+    // ) throws Exception {
 
-        log.info("XML DTO request received");
-        return dtoGeneratorService.generateXmlDto(
-                xml, rootClassName, prefix, includeAnnotations);
-    }
+    //     log.info("XML DTO request received");
+    //     return dtoGeneratorService.generateXmlDto(
+    //             xml, rootClassName, prefix, includeAnnotations);
+    // }
 
     @PostMapping("/json/generate")
     public String generateJsonDto(
