@@ -10,6 +10,12 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/dto")
+@CrossOrigin(
+    origins = {
+        "http://localhost:3000",
+        "https://dtodeployment.onrender.com"
+    }
+)
 public class DtoGeneratorController {
 
     private final DtoGeneratorServiceImpl dtoGeneratorService;
