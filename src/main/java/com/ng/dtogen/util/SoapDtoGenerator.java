@@ -1,45 +1,39 @@
 package com.ng.dtogen.util;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import org.springframework.stereotype.Service;
+import org.w3c.dom.*;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.springframework.stereotype.Service;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 @Service
 public class SoapDtoGenerator {
 
-    private static final Map<String, String> SIGNATURE_CLASS_MAP = new HashMap<>();
-    private static String MAIN_CLASS_NAME = "";
-    private static String ROOT_PREFIX = "";
+    private static String PREFIX = "";
+    private static boolean INCLUDE_ANNOTATIONS = true;
 
-    public String generateDtoFromSoap(String xml, String rootPrefix, String mainClassName) throws Exception {
+    public String generateDtoFromSoap(
+            String xml,
+            String rootClassName,
+            String prefix,
+            boolean includeAnnotations
+    ) throws Exception {
 
-        MAIN_CLASS_NAME = mainClassName;
-        ROOT_PREFIX = rootPrefix;
-        SIGNATURE_CLASS_MAP.clear();
+        PREFIX = prefix == null ? "" : prefix.trim();
+        INCLUDE_ANNOTATIONS = includeAnnotations;
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(false);
+
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document doc = builder.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
 
         Element root = doc.getDocumentElement();
-        String rawTag = root.getTagName();          
-        String localTag = stripPrefix(rawTag);      
-        String envelopeClass = ROOT_PREFIX + cap(localTag);
+        String rootTag = stripNamespace(root.getTagName());
+        String envelopeClass = PREFIX + toClassName(rootTag);
 
         StringBuilder sb = new StringBuilder();
         Set<String> generated = new HashSet<>();
@@ -48,104 +42,152 @@ public class SoapDtoGenerator {
         sb.append("import jakarta.xml.bind.annotation.XmlAccessType;\n")
           .append("import jakarta.xml.bind.annotation.XmlAccessorType;\n")
           .append("import jakarta.xml.bind.annotation.XmlElement;\n")
-          .append("import jakarta.xml.bind.annotation.XmlRootElement;\n\n");
+          .append("import jakarta.xml.bind.annotation.XmlRootElement;\n")
+          .append("import java.util.List;\n\n");
 
-        // main class
+        // root wrapper
+        if (INCLUDE_ANNOTATIONS) {
+            sb.append("@XmlRootElement(name = \"").append(rootTag).append("\")\n");
+        }
         sb.append("@XmlAccessorType(XmlAccessType.FIELD)\n");
-        sb.append("public class ").append(MAIN_CLASS_NAME).append(" {\n\n");
+        sb.append("public class ").append(rootClassName).append(" {\n\n");
 
-        sb.append("    @XmlElement(name = \"").append(localTag).append("\")\n");
-        sb.append("    private ").append(envelopeClass).append(" ").append(decap(localTag)).append(";\n\n");
+        if (INCLUDE_ANNOTATIONS) {
+            sb.append("    @XmlElement(name = \"").append(rootTag).append("\")\n");
+        }
+        sb.append("    private ").append(envelopeClass)
+          .append(" ").append(toFieldName(rootTag)).append(";\n\n");
 
-        // main envelope class
-        sb.append("    @XmlAccessorType(XmlAccessType.FIELD)\n");
-        sb.append("    public static class ").append(envelopeClass).append(" {\n\n");
+        // envelope class
+        writeClassHeader(sb, envelopeClass, "    ");
+        generateFields(sb, root, generated, "        ");
+        sb.append("    }\n");
 
-        generateFields(sb, root, generated);
-
-        sb.append("    }\n\n"); // end envelope
-        sb.append("}\n"); // end main class
+        sb.append("}\n");
 
         return sb.toString();
     }
 
-    private void generateFields(StringBuilder sb, Element element, Set<String> generated) {
+    // --------------------------------------------------
+
+    private void generateFields(
+            StringBuilder sb,
+            Element element,
+            Set<String> generated,
+            String indent
+    ) {
+
         NodeList children = element.getChildNodes();
-        Map<String, List<Element>> groups = new LinkedHashMap<>();
+        Map<String, List<Element>> grouped = new LinkedHashMap<>();
 
         for (int i = 0; i < children.getLength(); i++) {
             if (children.item(i) instanceof Element e) {
-                groups.computeIfAbsent(e.getTagName(), k -> new ArrayList<>()).add(e);
+                String tag = stripNamespace(e.getTagName());
+                grouped.computeIfAbsent(tag, k -> new ArrayList<>()).add(e);
             }
         }
 
-        // Step 1: generate field declarations first
         List<String> nestedClasses = new ArrayList<>();
-        for (var entry : groups.entrySet()) {
-            String rawTag = entry.getKey();
-            String localTag = stripPrefix(rawTag);
-            Element first = entry.getValue().get(0);
 
-            boolean leaf = isLeaf(first);
+        for (var entry : grouped.entrySet()) {
 
-            if (leaf) {
-                sb.append("        @XmlElement(name = \"").append(localTag).append("\")\n");
-                sb.append("        private String ").append(decap(localTag)).append(";\n\n");
+            String tag = entry.getKey();
+            List<Element> elements = entry.getValue();
+            Element first = elements.get(0);
+
+            boolean isList = elements.size() > 1;
+            boolean isLeaf = isLeaf(first);
+            boolean isEmptyObject = !isLeaf && !hasText(first);
+
+            String fieldName = toFieldName(tag);
+            String className = PREFIX + toClassName(tag);
+
+            // ---------------- LEAF ----------------
+            if (isLeaf) {
+                if (INCLUDE_ANNOTATIONS) {
+                    sb.append(indent)
+                      .append("@XmlElement(name = \"").append(tag).append("\")\n");
+                }
+                sb.append(indent)
+                  .append("private ")
+                  .append(isList ? "List<String>" : "String")
+                  .append(" ")
+                  .append(fieldName)
+                  .append(";\n\n");
                 continue;
             }
 
-            String signature = getSignature(first);
-            String className = SIGNATURE_CLASS_MAP.computeIfAbsent(signature, k -> ROOT_PREFIX + cap(localTag));
+            // ---------------- OBJECT ----------------
+            if (INCLUDE_ANNOTATIONS) {
+                sb.append(indent)
+                  .append("@XmlElement(name = \"").append(tag).append("\")\n");
+            }
 
-            sb.append("        @XmlElement(name = \"").append(localTag).append("\")\n");
-            sb.append("        private ").append(className).append(" ").append(decap(localTag)).append(";\n\n");
+            sb.append(indent)
+              .append("private ")
+              .append(isList ? "List<" + className + ">" : className)
+              .append(" ")
+              .append(fieldName)
+              .append(";\n\n");
 
-            if (!generated.contains(className)) {
-                generated.add(className);
-
-                // collect nested class definition to append later
+            if (generated.add(className)) {
                 StringBuilder nested = new StringBuilder();
-                nested.append("        @XmlAccessorType(XmlAccessType.FIELD)\n");
-                nested.append("        public static class ").append(className).append(" {\n\n");
-                generateFields(nested, first, generated);
-                nested.append("        }\n\n");
+                writeClassHeader(nested, className, indent);
+
+                if (!isEmptyObject) {
+                    generateFields(nested, first, generated, indent + "    ");
+                }
+
+                nested.append(indent).append("}\n\n");
                 nestedClasses.add(nested.toString());
             }
         }
 
-        // Step 2: append nested class definitions after fields
-        for (String cls : nestedClasses) {
-            sb.append(cls);
-        }
+        // append nested classes AFTER fields
+        nestedClasses.forEach(sb::append);
     }
 
+    private void writeClassHeader(StringBuilder sb, String className, String indent) {
+        sb.append(indent)
+          .append("@XmlAccessorType(XmlAccessType.FIELD)\n");
+        sb.append(indent)
+          .append("public static class ").append(className).append(" {\n\n");
+    }
+
+    // --------------------------------------------------
+
     private boolean isLeaf(Element e) {
-        NodeList kids = e.getChildNodes();
-        for (int i = 0; i < kids.getLength(); i++) {
-            if (kids.item(i) instanceof Element) return false;
+        NodeList children = e.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            if (children.item(i) instanceof Element) return false;
         }
         return true;
     }
 
-    private String stripPrefix(String tagName) {
-        return tagName.contains(":") ? tagName.substring(tagName.indexOf(":") + 1) : tagName;
+    private boolean hasText(Element e) {
+        return e.getTextContent() != null && !e.getTextContent().trim().isEmpty();
     }
 
-    private String getSignature(Element e) {
-        List<String> tags = new ArrayList<>();
-        NodeList kids = e.getChildNodes();
-        for (int i = 0; i < kids.getLength(); i++) {
-            if (kids.item(i) instanceof Element el)
-                tags.add(stripPrefix(el.getTagName()));
+    private String stripNamespace(String tag) {
+        return tag.contains(":") ? tag.substring(tag.indexOf(":") + 1) : tag;
+    }
+
+    // XML tag → Java ClassName
+    private String toClassName(String s) {
+        s = s.replace("-", " ").replace("_", " ");
+        StringBuilder out = new StringBuilder();
+        for (String part : s.split(" ")) {
+            if (!part.isBlank()) {
+                out.append(Character.toUpperCase(part.charAt(0)))
+                   .append(part.substring(1));
+            }
         }
-        return String.join("_", tags);
+        return out.toString();
     }
 
-    private String cap(String s) {
-        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
-    }
-
-    private String decap(String s) {
-        return Character.toLowerCase(s.charAt(0)) + s.substring(1);
+    // XML tag → Java fieldName
+    private String toFieldName(String s) {
+        String className = toClassName(s);
+        return Character.toLowerCase(className.charAt(0)) + className.substring(1);
     }
 }
