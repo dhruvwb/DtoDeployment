@@ -26,7 +26,6 @@ public class DtoGeneratorController {
             @RequestParam(defaultValue = "false") boolean includeAnnotations
     ) throws Exception {
 
-        log.info("XML DTO request received");
         return dtoGeneratorService.generateXmlDto(
                 xml, rootClassName, prefix, includeAnnotations);
     }
@@ -39,7 +38,6 @@ public class DtoGeneratorController {
             @RequestParam(defaultValue = "false") boolean includeAnnotations
     ) throws Exception {
 
-        log.info("JSON DTO request received");
         return dtoGeneratorService.generateJsonDto(
                 json, rootClassName, prefix, includeAnnotations);
     }
@@ -52,14 +50,12 @@ public class DtoGeneratorController {
             @RequestParam(defaultValue = "false") boolean includeAnnotations
     ) throws Exception {
 
-        log.info("SOAP DTO request received");
         return dtoGeneratorService.generateSoapDto(
                 xml, rootClassName, prefix, includeAnnotations);
     }
 
     @PostMapping("/json/compare")
     public String compareJson(@RequestBody CompareRequest request) throws Exception {
-        log.info("JSON compare request received");
         return dtoGeneratorService.compareJson(request);
     }
 }
