@@ -1,11 +1,17 @@
 package com.ng.dtogen.controller;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.ng.dtogen.model.CompareRequest;
-import com.ng.dtogen.service.DtoGeneratorService;
 import com.ng.dtogen.service.DtoGeneratorServiceImpl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -58,4 +64,6 @@ public class DtoGeneratorController {
     public String compareJson(@RequestBody CompareRequest request) throws Exception {
         return dtoGeneratorService.compareJson(request);
     }
+    
+   
 }
