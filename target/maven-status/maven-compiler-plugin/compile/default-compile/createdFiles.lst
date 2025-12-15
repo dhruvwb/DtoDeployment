@@ -1,9 +1,12 @@
 com\ng\dtogen\DtoGenApplication.class
 com\ng\dtogen\util\JsonComparatorJackson.class
+com\ng\dtogen\controller\GlobalOptionsController.class
+com\ng\dtogen\model\CompareRequest.class
+com\ng\dtogen\service\DtoGeneratorService.class
 com\ng\dtogen\util\XmlDtoGenerator.class
+com\ng\dtogen\config\CorsConfig$1.class
 com\ng\dtogen\service\DtoGeneratorServiceImpl.class
 com\ng\dtogen\util\SoapDtoGenerator.class
 com\ng\dtogen\util\JsonDtoGenerator.class
-com\ng\dtogen\model\CompareRequest.class
+com\ng\dtogen\config\CorsConfig.class
 com\ng\dtogen\controller\DtoGeneratorController.class
-com\ng\dtogen\service\DtoGeneratorService.class
