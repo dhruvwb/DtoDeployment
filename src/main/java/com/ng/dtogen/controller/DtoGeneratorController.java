@@ -24,7 +24,7 @@ public class DtoGeneratorController {
         this.dtoGeneratorService = dtoGeneratorService;
     }
 
-    @PostMapping("/xml/generate")
+    @PostMapping(value = "/xml/generate" , consumes = "application/xml")
     public String generateXmlDto(
             @RequestBody String xml,
             @RequestParam String rootClassName,
@@ -36,7 +36,7 @@ public class DtoGeneratorController {
                 xml, rootClassName, prefix, includeAnnotations);
     }
 
-    @PostMapping("/json/generate")
+    @PostMapping(value="/json/generate", consumes = "application/json")
     public String generateJsonDto(
             @RequestBody Object json,
             @RequestParam String rootClassName,
@@ -60,7 +60,7 @@ public class DtoGeneratorController {
                 xml, rootClassName, prefix, includeAnnotations);
     }
 
-    @PostMapping("/json/compare")
+    @PostMapping(value = "/json/compare",consumes = "application/json")
     public String compareJson(@RequestBody CompareRequest request) throws Exception {
         return dtoGeneratorService.compareJson(request);
     }
