@@ -59,23 +59,29 @@ public class JsonDtoGenerator {
             Set<String> generated,
             String indent) {
 
-        if (!node.isObject())
-            return;
+        if (!node.isObject()) return;
 
         Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
 
         while (fields.hasNext()) {
             Map.Entry<String, JsonNode> entry = fields.next();
-            String fieldName = entry.getKey();
+            String rawFieldName = entry.getKey();
             JsonNode child = entry.getValue();
 
+            // ✅ Ignore XML namespace declarations
+            if (rawFieldName.startsWith("@xmlns")) {
+                continue;
+            }
+
+            String cleanFieldName = stripNamespace(rawFieldName);
+
             if (child.isValueNode()) {
-                writeField(sb, fieldName, "String", false, indent);
+                writeField(sb, cleanFieldName, "String", indent);
             }
 
             else if (child.isObject()) {
-                String className = PREFIX + toCamel(fieldName);
-                writeField(sb, fieldName, className, false, indent);
+                String className = PREFIX + toCamel(cleanFieldName);
+                writeField(sb, cleanFieldName, className, indent);
 
                 if (generated.add(className)) {
                     writeClassHeader(sb, className, indent);
@@ -86,12 +92,13 @@ public class JsonDtoGenerator {
 
             else if (child.isArray()) {
                 if (child.isEmpty() || child.get(0).isValueNode()) {
-                    writeField(sb, fieldName, "List<String>", true, indent);
-                } else if (child.get(0).isObject()) {
+                    writeField(sb, cleanFieldName, "List<String>", indent);
+                }
+                else if (child.get(0).isObject()) {
                     JsonNode merged = mergeArrayObjects(child);
-                    String className = PREFIX + toCamel(fieldName);
+                    String className = PREFIX + toCamel(cleanFieldName);
 
-                    writeField(sb, fieldName, "List<" + className + ">", true, indent);
+                    writeField(sb, cleanFieldName, "List<" + className + ">", indent);
 
                     if (generated.add(className)) {
                         writeClassHeader(sb, className, indent);
@@ -116,9 +123,10 @@ public class JsonDtoGenerator {
             StringBuilder sb,
             String jsonField,
             String type,
-            boolean isList,
             String indent) {
 
+        // 🔁 ORIGINAL LOGIC RESTORED:
+        // Add @JsonProperty ONLY if not camelCase
         if (!isCamelCase(jsonField)) {
             sb.append(indent)
                     .append("@JsonProperty(\"")
@@ -127,6 +135,7 @@ public class JsonDtoGenerator {
         }
 
         String fieldName = decap(toCamel(jsonField));
+
         sb.append(indent)
                 .append("private ")
                 .append(type)
@@ -135,16 +144,20 @@ public class JsonDtoGenerator {
                 .append(";\n\n");
     }
 
-    // ----------- Helpers -------------
+    // ---------------- Helpers ----------------
+
+    private String stripNamespace(String s) {
+        int idx = s.indexOf(':');
+        return idx > -1 ? s.substring(idx + 1) : s;
+    }
 
     private JsonNode mergeArrayObjects(JsonNode array) {
         Map<String, JsonNode> merged = new LinkedHashMap<>();
 
         for (JsonNode obj : array) {
             if (obj.isObject()) {
-                obj.fields().forEachRemaining(e -> {
-                    merged.putIfAbsent(e.getKey(), e.getValue());
-                });
+                obj.fields().forEachRemaining(e ->
+                        merged.putIfAbsent(e.getKey(), e.getValue()));
             }
         }
         return mapper.valueToTree(merged);

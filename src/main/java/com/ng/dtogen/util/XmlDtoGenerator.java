@@ -27,7 +27,7 @@ public class XmlDtoGenerator {
         Document doc = builder.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
 
         Element root = doc.getDocumentElement();
-        String rootTag = stripNamespace(root.getTagName());  // ⭐ FIX 1SSS
+        String rootTag = stripNamespace(root.getTagName());  // ⭐ FIX 1
 
         StringBuilder sb = new StringBuilder();
         Set<String> generated = new HashSet<>();
