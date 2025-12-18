@@ -1,5 +1,6 @@
 com\ng\dtogen\DtoGenApplication.class
 com\ng\dtogen\util\JsonComparatorJackson.class
+com\ng\dtogen\controller\WarmupController.class
 com\ng\dtogen\controller\GlobalOptionsController.class
 com\ng\dtogen\model\CompareRequest.class
 com\ng\dtogen\service\DtoGeneratorService.class
